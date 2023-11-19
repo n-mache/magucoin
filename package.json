@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "@slack/bolt": "^3.14.0",
+    "dotenv": "^16.3.1",
+    "lockfile": "^1.0.4",
+    "node-cron": "^3.0.3"
+  },
+  "name": "magucoin",
+  "version": "1.0.0",
+  "description": "Slackで仮想通貨もどきをやり取りできるBot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/n-mache/magucoin.git"
+  },
+  "author": "mache <n.mache.work@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/n-mache/magucoin/issues"
+  },
+  "homepage": "https://github.com/n-mache/magucoin#readme"
+}
