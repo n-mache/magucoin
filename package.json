@@ -2,7 +2,6 @@
   "dependencies": {
     "@slack/bolt": "^3.14.0",
     "dotenv": "^16.3.1",
-    "lockfile": "^1.0.4",
     "node-cron": "^3.0.3"
   },
   "name": "magucoin",
