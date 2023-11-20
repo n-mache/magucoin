@@ -27,6 +27,7 @@ APPTOKEN=<「xapp」から始まるSocket modeを有効化するときに作っ�
 #### 実行の準備
 ```
 git clone https://github.com/n-mache/magucoin
+cd magucoin
 npm i
 ```
 #### 実行コマンド
