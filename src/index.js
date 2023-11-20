@@ -1,11 +1,7 @@
 const fs = require('fs');
-const lockfile = require('lockfile');
 const cron = require('node-cron');
 const { App } = require('@slack/bolt');
-const { log } = require('console');
 require('dotenv').config();
-
-// message.thread_ts !== undefined ? message.thread_ts : undefined
 
 if (!fs.existsSync("data/")) {
     fs.mkdirSync("data/");
@@ -35,19 +31,16 @@ async function sleep(t) {
 var confirms = {};
 
 function file_read(file) {
-//    lockfile.lockSync(file, {retries: 10, retryWait: 100});
     try{
         var data = fs.readFileSync(file, 'utf8');
     }catch(e){
         var data = undefined;
     }finally{
-//        lockfile.unlockSync(file);
     }
     return data;
 }
 
 function file_write(file, data) {
-//    lockfile.lockSync(file, {retries: 10, retryWait: 100});
     var success = false;
     try{
         fs.writeFileSync(file, JSON.stringify(data), 'utf8');
@@ -55,7 +48,6 @@ function file_write(file, data) {
     }catch (e){
         console.log(e);
     }finally{
-//        lockfile.unlockSync(file);
     }
     return success;
 }
@@ -111,8 +103,6 @@ app.message(/!mg .*/, async ({ message, say }) => {
     }else{
         await say({text: "*【エラー】*\n該当するコマンドが見つかりませんでした。\nスペルミスが無いかなどを確認して下さい。\n`!mg help` でコマンド一覧を表示出来ます。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : undefined});
     }
-/*    var confirm = await say({"text": "*【他ユーザーへの送金】*\n<@U05T7EMBC7P>に対して `100コイン` を送金しようとしています。\n本当によろしいですか？\nこのメッセージに:ok:のリアクションを付けることで操作が確定します。\n※30秒が経過するとこの操作は無効になり、再度コマンド実行が必要になります。\n※この操作は取り消せません。\n※「レターパックで現金送れ」は全て詐欺です。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : undefined});
-    app.client.reactions.add({channel: message.channel,timestamp: confirm.ts,name: 'ok'});*/
 });
 
 commands["help"] = async function (message, say, command) {
@@ -149,7 +139,6 @@ commands["send"] = async function (message, say, command) {
     var confirm = await say({"text": "*【他ユーザーへの送金】*\n<@"+userid+">に対して `"+command[2]+"コイン` を送金しようとしています。\nこのメッセージに:ok:のリアクションを付けることで操作が確定します。\n※30秒が経過するとこの操作は無効になり、再度コマンド実行が必要になります。\n※この操作は取り消せません。\n※「レターパックで現金送れ」は全て詐欺です。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : undefined});
     app.client.reactions.add({channel: message.channel,timestamp: confirm.ts,name: 'ok'});
     confirms[confirm.ts] = {"expire": Date.now()+30000, "action": "send", "user": message.user, "to": userid, "amount": command[2]};
-//    await say({"text": "<@"+userid+">さんに"+command[2]+"コインを送金しました。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : undefined});
 };
 commands["balance"] = async function (message, say, command) {
     var userid = message.user;
@@ -201,7 +190,6 @@ commands["janken"] = async function (message, say, command) {
     }
     var confirm = await say({"text": "*【じゃんけん】*\n`"+command[1]+"コイン` を賭けてじゃんけんをします。\nこのメッセージに:ok:のリアクションを付けることで操作が確定します。\n※30秒が経過するとこの操作は無効になり、再度コマンド実行が必要になります。\n※この操作は取り消せません。\n※「レターパックで現金送れ」は全て詐欺です。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : undefined});
     app.client.reactions.add({channel: message.channel,timestamp: confirm.ts,name: 'ok'});
-//    confirms[confirm.ts] = {"expire": Date.now()+30000, "action": "send", "from": message.user, "to": userid, "amount": command[2]};
     confirms[confirm.ts] = {"expire": Date.now()+30000, "action": "janken", "user": message.user, "amount": command[1]};
 };
 app.event('reaction_added', async ({ event, say }) => {
