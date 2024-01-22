@@ -174,7 +174,12 @@ commands["ranking"] = async function (message, say, command) {
         if (i >= 100) break;
         text += (i+1)+"位: <@"+ranking[i][0]+"> `"+ranking[i][1]+"コイン`\n";
     }
-    await say(text);
+    await app.client.chat.postEphemeral({
+        channel: message.channel,
+        user: message.user,
+        text: text
+    });
+    await say("*【ランキング】*\n<@"+message.user+">さんにのみ表示されるメッセージで送信しました。");
 };
 commands["janken"] = async function (message, say, command) {
     if (command.length !== 2 || (!Number.isInteger(Number(command[1])) || !(Number(command[1]) > 0) || !(Number(command[1]) <= 500))) {
