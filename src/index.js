@@ -118,7 +118,6 @@ commands["send"] = async function (message, say, command) {
         await say({"text": "*【他ユーザーへの送金】*\nコマンドの形式が無効です。\nコマンドは次の形式で実行して下さい: `"+prefix+"send <@ユーザー名> <金額>`", thread_ts: message.thread_ts !== undefined ? message.thread_ts : undefined});
         return;
     }
-    // command[1] からユーザーIDを取得する
     var userid = command[1].replace("<@","").replace(">","");
     if (userid === message.user) {
         await say({"text": "*【他ユーザーへの送金】*\n自分に対して送金することは出来ません。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : undefined});
@@ -127,6 +126,10 @@ commands["send"] = async function (message, say, command) {
     var user = await app.client.users.info({user: userid}).catch((error) => {});
     if (typeof user === "undefined") {
         await say({"text": "*【他ユーザーへの送金】*\n指定されたユーザーが見つかりませんでした。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : undefined});
+        return;
+    }
+    if (user.user.is_bot) {
+        await say({"text": "*【他ユーザーへの送金】*\nボットに対して送金することは出来ません。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : undefined});
         return;
     }
     verify_user_data(message.user);
@@ -146,6 +149,10 @@ commands["balance"] = async function (message, say, command) {
         var user = await app.client.users.info({user: command[1].replace("<@","").replace(">","")}).catch((error) => {});
         if (typeof user !== "undefined") {
             userid = command[1].replace("<@","").replace(">","");
+        }
+        if (user.user.is_bot) {
+            await say({"text": "*【所持コインの確認】*\nボットはお金を所持できません。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : undefined});
+            return;
         }
     }
     verify_user_data(userid);
@@ -203,12 +210,24 @@ app.event('reaction_added', async ({ event, say }) => {
         var data = confirms[event.item.ts];
         delete confirms[event.item.ts];
         if (data.action === "send") {
+            verify_user_data(data.user);
+            var coins = file_read("data/user_coins.json");
+            if (coins[data.user] < data.amount) {
+                await say({"text": "*【他ユーザーへの送金】*\n所持しているまぐコインが不足しています。", thread_ts: event.item.thread_ts !== undefined ? event.item.thread_ts : event.item.ts});
+                return;
+            }
             change_user_coin(data.user, -data.amount);
             change_user_coin(data.to, data.amount);
             fs.appendFileSync("data/history.csv", Date.now()+","+generate_transid()+","+data.user+","+data.to+","+data.amount+"\n");
             await say({text: "*【他ユーザーへの送金】*\n<@"+data.user+">さんが<@"+data.to+">さんに"+data.amount+"コインを送金しました。", thread_ts: event.item.thread_ts !== undefined ? event.item.thread_ts : event.item.ts});
         }
         if (data.action === "janken") {
+            verify_user_data(data.user);
+            var coins = file_read("data/user_coins.json");
+            if (coins[data.user] < data.amount) {
+                await say({"text": "*【じゃんけん】*\n所持しているまぐコインが不足しています。", thread_ts: event.item.thread_ts !== undefined ? event.item.thread_ts : event.item.ts});
+                return;
+            }
             var result = Math.floor(Math.random() * 3);
             if (result == 0){
                 change_user_coin(data.user, -data.amount);
@@ -216,7 +235,6 @@ app.event('reaction_added', async ({ event, say }) => {
                 await say({"text": "*【じゃんけん】*\n<@"+data.user+">さんはじゃんけんに負けて"+data.amount+"コインを失いました。", thread_ts: event.item.thread_ts !== undefined ? event.item.thread_ts : event.item.ts});
             }
             if (result == 1){
-                change_user_coin(data.user, data.amount);
                 await say({"text": "*【じゃんけん】*\n<@"+data.user+">さんはじゃんけんで引き分けでした。", thread_ts: event.item.thread_ts !== undefined ? event.item.thread_ts : event.item.ts});
             }
             if (result == 2){
