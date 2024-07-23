@@ -96,7 +96,7 @@ const cmdlist = {
 };
 const commands = {};
 
-app.message(/!mg .*/, async ({ message, say }) => {
+app.message(/^!mg .*/, async ({ message, say }) => {
     var command = message.text.replace("!mg ", "").split(" ");
     if (typeof commands[command[0]] === "function") {
         await commands[command[0]](message, say, command);
