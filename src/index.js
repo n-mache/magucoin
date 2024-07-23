@@ -96,6 +96,7 @@ const cmdlist = {
     "login": "ログインボーナスを受け取ります。",
     "janken": "3分の1の確率で指定した金額が倍になります。",
     "setconfirmbypass": "コマンド実行時の確認をスキップするように設定します。",
+    "stocks": "株価を取得し、株を購入または売却します。"
 };
 const commands = {};
 
@@ -112,7 +113,7 @@ commands["help"] = async function (message, say, command) {
     await app.client.chat.postEphemeral({
         channel: message.channel,
         user: message.user,
-        text: "*【まぐコインについて】*\nまぐコインとは、初期状態で全員に100コインずつ配布されているオリジナルの通貨です。\nコマンドを使用して増やしたり、送金したり出来ます。\n\n*【コマンド一覧】*\n"+prefix+"help [command]: helpを表示します\n"+prefix+"balance [@ユーザー名]: 所持しているまぐコインを表示します。\n"+prefix+"send <@ユーザー名> <金額>: 指定したユーザーに対して指定した金額のまぐコインを送金します。\n"+prefix+"ranking: まぐコインのランキングを表示します。\n"+prefix+"login: ログインボーナスを受け取ります。\n"+prefix+"janken <金額>: 3分の1の確率で指定した金額が倍になります。\n"+prefix+"setconfirmbypass <on|off>: 操作実行時の確認メッセージを表示せずに操作を行えるようにします。\n\n※[]は任意項目\n※<>は必須項目",
+        text: "*【まぐコインについて】*\nまぐコインとは、初期状態で全員に100コインずつ配布されているオリジナルの通貨です。\nコマンドを使用して増やしたり、送金したり出来ます。\n\n*【コマンド一覧】*\n"+prefix+"help [command]: helpを表示します\n"+prefix+"balance [@ユーザー名]: 所持しているまぐコインを表示します。\n"+prefix+"send <@ユーザー名> <金額>: 指定したユーザーに対して指定した金額のまぐコインを送金します。\n"+prefix+"ranking: まぐコインのランキングを表示します。\n"+prefix+"login: ログインボーナスを受け取ります。\n"+prefix+"janken <金額>: 3分の1の確率で指定した金額が倍になります。\n"+prefix+"setconfirmbypass <on|off>: 操作実行時の確認メッセージを表示せずに操作を行えるようにします。\n"+prefix+"stocks <buy|sell|list>: 模擬的な株取引が出来ます。\n\n※[]は任意項目\n※<>は必須項目",
         thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts
     });
     await say({"text": "*【ヘルプ】*\n<@"+message.user+">さんにのみ表示されるメッセージで送信しました。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
@@ -256,7 +257,7 @@ commands["stocks"] = async function (message, say, command) {
         var data = file_read("data/user_stocks.json");
         var stocks = JSON.parse(data)[message.user];
         var text = "*【まぐ株】*\n";
-        if (typeof stocks === "undefined" || stocks.length === 0) {
+        if (typeof stocks === "undefined" || Object.keys(stocks).length === 0) {
             text += "保有している株がありません。";
         }else{
             text += "保有している株:\n";
