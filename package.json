@@ -2,7 +2,7 @@
   "dependencies": {
     "@slack/bolt": "^3.14.0",
     "dotenv": "^16.3.1",
-    "node-cron": "^3.0.3"
+    "yahoo-finance2": "^2.11.3"
   },
   "name": "magucoin",
   "version": "1.0.0",
