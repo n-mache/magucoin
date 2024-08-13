@@ -1,7 +1,7 @@
 const fs = require('fs');
-const yahooFinance = require('yahoo-finance2').default;
 const { App } = require('@slack/bolt');
 const { error } = require('console');
+const https = require('https');
 require('dotenv').config();
 
 if (!fs.existsSync("data/")) {
@@ -214,7 +214,7 @@ commands["janken"] = async function (message, say, command) {
         await say({"text": "*【じゃんけん】*\n所持しているまぐコインが不足しています。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
         return;
     }
-    var result = Math.floor(Math.random() * 3);
+    var result = Math.floor(Math.random() * 5);
     var bypass = JSON.parse(file_read("data/user_bypassconfirm.json"));
     if (typeof bypass[userid] !== "undefined" && bypass[userid]) {
         await action_janken(message.thread_ts !== undefined ? message.thread_ts : message.ts, say, {"user": userid, "amount": command[1], "result": result});
@@ -240,9 +240,7 @@ commands["setconfirmbypass"] = async function (message, say, command) {
     app.client.reactions.add({channel: message.channel,timestamp: confirm.ts,name: 'ok'});
     confirms[confirm.ts] = {"expire": Date.now()+30000, "action": "setconfirmbypass", "user": message.user, "skip": skip};
 }
-// stocksコマンドは実際の株価を取得し、user_stocksを更新する
 commands["stocks"] = async function (message, say, command) {
-    // buy, sell, list
     if (command.length < 2) {
         await say({"text": "*【まぐ株】*\nコマンドの形式が無効です。\nコマンドは次の形式で実行して下さい: `"+prefix+"stocks [buy|sell|list]`", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
         return;
@@ -269,14 +267,43 @@ commands["stocks"] = async function (message, say, command) {
         await say({"text": text, thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
         return;
     }
-    // buyやsellの場合は、引数に株コードと株数が必要
-    // 東京証券取引所の証券コードは4桁の数字とアルファベットの組み合わせである
-    // 英大文字のうち、「B」、「E」、「I」、「O」、「Q」、「V」、「Z」を除く19文字
     if (command.length < 4 || !command[2].match(/[0-9ACDFGHJKLMNPRSTUWXY]{4}/) || !Number.isInteger(Number(command[3])) || !(Number(command[3]) > 0)) {
         await say({"text": "*【まぐ株】*\nコマンドの形式が無効です。\nコマンドは次の形式で実行して下さい: `"+prefix+"stocks "+subcommand+" [証券コード (4桁)] [株数]`\n\n※東京証券取引所の証券コードである必要があります", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
         return;
     }
-    var quote = await yahooFinance.quote(command[2]+".T").catch((error) => {});
+    var quote = null;
+    try{
+        var data = await new Promise((resolve, reject)=>{
+            https.get({hostname: "query2.finance.yahoo.com", path: "/v8/finance/chart/"+command[2]+".T", headers: {"User-Agent": "magucoin (https://github.com/n-mache/magucoin)"}}, (res)=>{
+                var data = "";
+                res.on("data", (chunk)=>{
+                    data += chunk;
+                });
+                res.on("end", ()=>{
+                    resolve(data);
+                });
+                res.on("error", (e)=>{
+                    reject(e);
+                });
+            });
+        });
+        console.log(data);
+        var data = JSON.parse(data);
+        if (data.chart.error !== null) {
+            var error = "株情報の取得に失敗しました。";
+            if (typeof data.chart.error.code !== "undefined" && typeof data.chart.error.description !== "undefined") {
+                error = data.chart.error.code+": "+data.chart.error.description;
+            }
+            await say({"text": "*【まぐ株】*\n"+error, thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
+            return;
+        }
+        quote = data.chart.result[0].meta;
+        console.log(quote);
+    }catch(e){
+        console.log(e);
+        await say({"text": "*【まぐ株】*\n通信エラーが発生しました。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
+        return;
+    }
     if (typeof quote === "undefined") {
         await say({"text": "*【まぐ株】*\n指定された証券コード("+command[2]+")が見つかりませんでした。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
         return;
@@ -292,8 +319,8 @@ commands["stocks"] = async function (message, say, command) {
         if (typeof stocks[message.user][code] === "undefined") {
             stocks[message.user][code] = {"name": quote.shortName, "amount": 0};
         }
-        var price = Math.floor(quote.bid);
-        if (price * amount > users[message.user][code]) {
+        var price = Math.ceil(quote.regularMarketPrice);
+        if (price * amount > users[message.user]) {
             await say({"text": "*【まぐ株】*\n所持しているまぐコインが不足しています。\n必要まぐコイン: `"+(price * amount)+"` コイン", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
             return;
         }
@@ -309,7 +336,7 @@ commands["stocks"] = async function (message, say, command) {
             await say({"text": "*【まぐ株】*\n所持している株が不足しています。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
             return;
         }
-        var price = Math.floor(quote.ask);
+        var price = Math.floor(quote.regularMarketPrice);
         var confirm = await say({
             "text": "*【まぐ株】*\n"+quote.shortName+"("+code+")を `"+amount+"` 株売却しようとしています。\n売却時のまぐコインは `"+(price * amount)+"` コインです。\nこのメッセージに:ok:のリアクションを付けることで操作が確定します。\n※30秒が経過するとこの操作は無効になり、再度コマンド実行が必要になります。\n※この操作は取り消せません。",
             "thread_ts": message.thread_ts !== undefined ? message.thread_ts : message.ts
@@ -370,18 +397,18 @@ async function action_janken(thread_ts, say, data) {
     }
     var result = data.result;
     var nowcoin = coins[data.user];
-    if (result == 0){
+    if ([0,1].includes(result)){
         nowcoin = change_user_coin(data.user, -data.amount);
         fs.appendFileSync("data/history.csv", Date.now()+","+generate_transid()+","+data.user+",SYSTEM_JANKEN,"+data.amount+"\n");
         await say({"text": "*【じゃんけん】*\n<@"+data.user+">さんはじゃんけんに負けて `"+data.amount+"` コインを失いました。\n現在のあなたの所持まぐコインは `"+nowcoin+"` コインです。", thread_ts: thread_ts});
     }
-    if (result == 1){
-        await say({"text": "*【じゃんけん】*\n<@"+data.user+">さんはじゃんけんで引き分けでした。\n現在のあなたの所持まぐコインは `"+nowcoin+"` コインです。", thread_ts: thread_ts});
-    }
-    if (result == 2){
+    if ([2,3].includes(result)){
         nowcoin = change_user_coin(data.user, data.amount);
         fs.appendFileSync("data/history.csv", Date.now()+","+generate_transid()+",SYSTEM_JANKEN,"+data.user+","+data.amount+"\n");
         await say({"text": "*【じゃんけん】*\n<@"+data.user+">さんはじゃんけんに勝って  `"+data.amount+"` コインを獲得しました。\n現在のあなたの所持まぐコインは `"+nowcoin+"` コインです。", thread_ts: thread_ts});
+    }
+    if ([4].includes(result)){
+        await say({"text": "*【じゃんけん】*\n<@"+data.user+">さんはじゃんけんで引き分けでした。\n現在のあなたの所持まぐコインは `"+nowcoin+"` コインです。", thread_ts: thread_ts});
     }
 }
 async function action_stocks(thread_ts, say, data) {
@@ -394,7 +421,7 @@ async function action_stocks(thread_ts, say, data) {
         if (typeof data.stocks[data.user][data.code] === "undefined") {
             data.stocks[data.user][data.code] = {"name": quote.shortName, "amount": 0};
         }
-        var price = Math.floor(quote.bid);
+        var price = Math.ceil(quote.regularMarketPrice);
         if (price * data.amount > users[data.user]) {
             await say({"text": "*【まぐ株】*\n所持しているまぐコインが不足しています。\n必要まぐコイン: `"+price+"` コイン", thread_ts: thread_ts});
             return;
@@ -409,7 +436,7 @@ async function action_stocks(thread_ts, say, data) {
             await say({"text": "*【まぐ株】*\n所持している株が不足しています。", thread_ts: thread_ts});
             return;
         }
-        var price = Math.floor(quote.ask);
+        var price = Math.floor(quote.regularMarketPrice);
         data.stocks[data.user][data.code].amount -= data.amount;
         if (data.stocks[data.user][data.code].amount === 0) {
             delete data.stocks[data.user][data.code];
