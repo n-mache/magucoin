@@ -287,7 +287,6 @@ commands["stocks"] = async function (message, say, command) {
                 });
             });
         });
-        console.log(data);
         var data = JSON.parse(data);
         if (data.chart.error !== null) {
             var error = "株情報の取得に失敗しました。";
@@ -298,9 +297,8 @@ commands["stocks"] = async function (message, say, command) {
             return;
         }
         quote = data.chart.result[0].meta;
-        console.log(quote);
     }catch(e){
-        console.log(e);
+        console.error(e);
         await say({"text": "*【まぐ株】*\n通信エラーが発生しました。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
         return;
     }
