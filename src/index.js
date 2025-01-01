@@ -110,6 +110,15 @@ app.message(/^!mg .*/, async ({ message, say }) => {
 });
 
 commands["help"] = async function (message, say, command) {
+    if (command.length !== 1) {
+        await app.client.chat.postEphemeral({
+            channel: message.channel,
+            user: message.user,
+            text: "*【コマンド検証】*\nこのコマンドには指定可能な引数がありません。",
+            thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts
+        });
+        return;
+    }
     await app.client.chat.postEphemeral({
         channel: message.channel,
         user: message.user,
@@ -171,6 +180,15 @@ commands["balance"] = async function (message, say, command) {
     await say({"text": "*【所持コインの確認】*\n<@"+userid+">さんの所持まぐコインは `"+users[message.user]+"コイン` です。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
 };
 commands["login"] = async function (message, say, command) {
+    if (command.length !== 1) {
+        await app.client.chat.postEphemeral({
+            channel: message.channel,
+            user: message.user,
+            text: "*【コマンド検証】*\nこのコマンドには指定可能な引数がありません。",
+            thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts
+        });
+        return;
+    }
     var logins = JSON.parse(file_read("data/user_login.json"));
     var dayid = Math.floor((Date.now()+7200000)/86400000)
     if (typeof logins[message.user] !== "undefined" && logins[message.user] === dayid) {
@@ -184,6 +202,15 @@ commands["login"] = async function (message, say, command) {
     await say({"text": "*【ログイン】*\nログインされました。\nログインボーナス: 100コイン", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
 };
 commands["ranking"] = async function (message, say, command) {
+    if (command.length !== 1) {
+        await app.client.chat.postEphemeral({
+            channel: message.channel,
+            user: message.user,
+            text: "*【コマンド検証】*\nこのコマンドには指定可能な引数がありません。",
+            thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts
+        });
+        return;
+    }
     var data = file_read("data/user_coins.json");
     var users = JSON.parse(data);
     var ranking = [];
