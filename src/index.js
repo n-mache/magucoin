@@ -230,8 +230,8 @@ commands["ranking"] = async function (message, say, command) {
     await say({"text": "*【ランキング】*\n<@"+message.user+">さんにのみ表示されるメッセージで送信しました。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
 };
 commands["janken"] = async function (message, say, command) {
-    if (command.length !== 2 || (!Number.isInteger(Number(command[1])) || !(Number(command[1]) > 0) || !(Number(command[1]) <= 500))) {
-        await say({"text": "*【じゃんけん】*\nコマンドの形式が無効です。\nコマンドは次の形式で実行して下さい: `"+prefix+"janken <金額>`\n※金額は最大500コインまでです。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
+    if (command.length !== 2 || (!Number.isInteger(Number(command[1])) || !(Number(command[1]) > 0) || !(Number(command[1]) <= 4096))) {
+        await say({"text": "*【じゃんけん】*\nコマンドの形式が無効です。\nコマンドは次の形式で実行して下さい: `"+prefix+"janken <金額>`\n※金額は最大4096コインまでです。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
         return;
     }
     var userid = message.user;
