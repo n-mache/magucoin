@@ -102,6 +102,7 @@ const commands = {};
 
 app.message(/^!mg .*/, async ({ message, say }) => {
     var command = message.text.replace("!mg ", "").split(" ");
+    console.log(message.text);
     if (typeof commands[command[0]] === "function") {
         await commands[command[0]](message, say, command);
     }else{
@@ -177,7 +178,7 @@ commands["balance"] = async function (message, say, command) {
     verify_user_data(userid);
     var data = file_read("data/user_coins.json");
     var users = JSON.parse(data);
-    await say({"text": "*【所持コインの確認】*\n<@"+userid+">さんの所持まぐコインは `"+users[message.user]+"コイン` です。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
+    await say({"text": "*【所持コインの確認】*\n<@"+userid+">さんの所持まぐコインは `"+users[userid]+"コイン` です。", thread_ts: message.thread_ts !== undefined ? message.thread_ts : message.ts});
 };
 commands["login"] = async function (message, say, command) {
     if (command.length !== 1) {
